@@ -21,10 +21,17 @@ class OpenAICompatibleClient(BaseLLMClient):
         except Exception as e:
             raise APIConnectionError(f"初始化OpenAI客户端失败: {e}")
     
-    def check_availability(self) -> bool:
-        # 这个检查可以根据需要做得更复杂
-        logger.info(f"正在检查模型 '{self.config.model_name}' 的可用性...")
-        return True # 简单实现，实际可以发一个ping请求
+    async def check_availability(self) -> bool:
+        """通过尝试列出模型来检查服务的可用性。"""
+        logger.info(f"正在检查API服务 '{self.config.api_base}' 的可用性...")
+        try:
+            # 发送一个轻量级请求
+            await self.async_client.models.list(timeout=5)
+            logger.info(f"API服务 '{self.config.api_base}' 连接成功。")
+            return True
+        except Exception as e:
+            logger.error(f"无法连接到API服务 '{self.config.api_base}': {e}")
+            return False
 
     async def get_streaming_chat_completion(
         self, messages: List[Dict[str, str]]

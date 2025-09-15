@@ -1,3 +1,5 @@
+# llm_client/core/config_loader.py
+
 import os
 import yaml
 from typing import Dict, Any, Optional
@@ -5,8 +7,12 @@ from pydantic import BaseModel, Field, validator
 from .exceptions import ConfigError
 import logging
 
-# 获取一个临时的logger，因为完整logger的配置依赖于此模块
 temp_logger = logging.getLogger(__name__)
+
+# 新增Instruction模板类
+class InstructionTemplate(BaseModel):
+    display_name: str
+    template: str
 
 class ModelParameters(BaseModel):
     temperature: float = 0.7
@@ -46,19 +52,27 @@ class ConfigLoader:
             raise ConfigError(f"YAML配置文件格式错误: {e}")
 
         self.models: Dict[str, BaseModelConfig] = self._parse_models()
-        self.instructions: Dict[str, str] = self.models_config_data.get('instructions', {})
+        # 直接解析instructions
+        self.instructions: Dict[str, InstructionTemplate] = self._parse_instructions()
         temp_logger.info(f"成功加载 {len(self.models)} 个模型配置和 {len(self.instructions)} 条指令。")
 
+    def _parse_instructions(self) -> Dict[str, InstructionTemplate]:
+        instructions = {}
+        for name, data in self.models_config_data.get('instructions', {}).items():
+            try:
+                instructions[name] = InstructionTemplate(**data)
+            except Exception as e:
+                raise ConfigError(f"解析指令 '{name}' 时出错: {e}")
+        return instructions
+
     def _parse_models(self) -> Dict[str, BaseModelConfig]:
+        # ... (此方法保持不变) ...
         models = {}
         for name, config in self.models_config_data.get('models', {}).items():
             provider = config.get('provider')
             try:
                 if provider == 'openai_compatible':
                     models[name] = OpenAICompatibleConfig(**config)
-                # 在这里可以添加对其他provider的处理逻辑
-                # elif provider == 'huggingface_local':
-                #     models[name] = HuggingFaceLocalConfig(**config)
                 else:
                     temp_logger.warning(f"不支持的模型提供商: '{provider}' for model '{name}'. 已跳过。")
             except Exception as e:
@@ -70,3 +84,9 @@ class ConfigLoader:
         if not model_conf:
             raise ConfigError(f"模型 '{name}' 在配置文件中未定义。")
         return model_conf
+
+    def get_instruction(self, name: str) -> InstructionTemplate:
+        instruction = self.instructions.get(name)
+        if not instruction:
+            raise ConfigError(f"指令 '{name}' 在配置文件中未定义。")
+        return instruction

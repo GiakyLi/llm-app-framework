@@ -69,15 +69,11 @@ python main.py [OPTIONS]
 ```
 
 **可选参数**:
--   `-m, --model <模型ID>`: 选择一个在 `models_config.yaml` 中定义的模型启动。默认为配置文件中的第一个模型。
-    ```bash
-    # 启动时使用 gpt-4o 模型
-    python main.py --model gpt-4o
-    ```
--   `-i, --instruction <指令ID>`: 选择一个初始指令。默认为 `default`。
+-   `-m, --model <模型ID>`: ...
+-   `-r, --role <角色ID>`: 选择一个初始角色。默认为 `default`。
     ```bash
     # 以代码专家模式启动
-    python main.py --model llama3-8b-vllm --instruction code_expert
+    python main.py --model llama3-8b-vllm --role code_expert
     ```
 
 ### 交互式命令
@@ -88,4 +84,5 @@ python main.py [OPTIONS]
 -   `/exit` 或 `/quit`: 退出程序并保存对话。
 -   `/clear`: 清空当前对话，但保留系统指令。
 -   `/instruction <指令ID>`: 实时切换系统指令。
+-   `/role <角色ID>`: 实时切换系统角色。
 -   `/save`: 手动保存当前对话历史。

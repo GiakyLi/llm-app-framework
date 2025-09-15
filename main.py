@@ -3,7 +3,6 @@ from llm_client.app import CommandLineApp
 from llm_client.core.config_loader import ConfigLoader
 from llm_client.core.storage import ConversationHistory
 from llm_client.core.logger import setup_logger
-from llm_client.core.prompts import PromptManager
 from llm_client.core.exceptions import LLMAppError
 import logging
 
@@ -14,7 +13,6 @@ def main():
             app_config_path='configs/app_config.yaml',
             models_config_path='configs/models_config.yaml'
         )
-        prompt_manager = PromptManager(filepath='configs/prompts.yaml')
         app_config = config_loader.app_config
 
         # 2. 设置日志
@@ -27,7 +25,7 @@ def main():
         memory_config = app_config.get('memory', {})
 
         # 4. 创建并运行应用
-        app = CommandLineApp(config_loader, prompt_manager, history_saver, memory_config)
+        app = CommandLineApp(config_loader, history_saver, memory_config)
         app.run()
 
     except LLMAppError as e:

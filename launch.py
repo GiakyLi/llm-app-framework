@@ -36,7 +36,7 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file):
         "-m", "vllm.entrypoints.openai.api_server",
         "--model", model_path,
         "--trust-remote-code",
-        "--max-model-len", "8192",
+        # "--max-model-len", "8192", # 移除此行，让VLLM自动推断
         "--host", host,
         "--port", str(port)
     ]
@@ -44,8 +44,8 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file):
     print(f"🚀 正在后台启动VLLM服务器...")
     print(f"   模型路径: {model_path}")
     print(f"   监听地址: http://{host}:{port}")
-    print(f"   最大长度限制: 8192 tokens")
-    print(f"   服务器日志将保存在: {log_file.name}") # 使用 log_file.name 获取路径
+    # print(f"   最大长度限制: 8192 tokens") # 移除此行
+    print(f"   服务器日志将保存在: {log_file.name}") 
     print("-" * 50)
 
     preexec_fn = os.setsid if sys.platform != "win32" else None

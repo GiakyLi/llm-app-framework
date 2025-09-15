@@ -8,12 +8,6 @@ class RichCLI_UI:
     def __init__(self):
         self.console = Console()
 
-    def display_full_assistant_response(self, full_response: str):
-        self.console.print("\n")
-        md = Markdown(full_response)
-        self.console.print(md)
-        self.console.print()
-
     def display_system_message(self, message: str, title: str = "System"):
         self.console.print(Panel(message, title=f"[bold yellow]{title}[/bold yellow]", border_style="yellow"))
 

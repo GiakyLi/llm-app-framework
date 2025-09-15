@@ -1,4 +1,5 @@
 # llm_client/app.py
+
 import argparse
 import asyncio
 from rich.live import Live
@@ -7,7 +8,6 @@ from rich.markdown import Markdown
 from .core.config_loader import ConfigLoader
 from .core.storage import ConversationHistory
 from .core.exceptions import LLMAppError
-from .core.prompts import PromptManager
 from .core.memory import ConversationMemory
 from .clients.openai_client import client_factory
 from .ui.cli import RichCLI_UI
@@ -16,24 +16,26 @@ import logging
 logger = logging.getLogger("LLM_APP")
 
 class CommandLineApp:
-    def __init__(self, config_loader: ConfigLoader, prompt_manager: PromptManager, 
+    # 更新构造函数
+    def __init__(self, config_loader: ConfigLoader, 
                  history_saver: ConversationHistory, memory_config: dict):
         self.config_loader = config_loader
-        self.prompt_manager = prompt_manager
         self.history_saver = history_saver
         self.memory_config = memory_config
         self.ui = RichCLI_UI()
         self.client = None
         self.memory: ConversationMemory = None
         self.current_model_id = None
+        self.current_role_id = None # 新增
 
     async def start_session(self, model_id: str, role_id: str):
         try:
             model_config = self.config_loader.get_model_config(model_id)
             self.client = client_factory(model_config)
             self.current_model_id = model_id
+            self.current_role_id = role_id # 记录当前角色
             
-            system_prompt = self.prompt_manager.get_system_prompt(role_id)
+            system_prompt = self.config_loader.get_instruction(role_id) # 从 config_loader 获取
             self.memory = ConversationMemory(
                 system_prompt=system_prompt.template,
                 token_limit=self.memory_config.get('max_context_tokens', 3000)
@@ -95,7 +97,9 @@ class CommandLineApp:
         if cmd in ['/exit', '/quit']:
             raise KeyboardInterrupt
         elif cmd == '/help':
-            self.ui.display_help(self.prompt_manager.list_system_prompts())
+            # 从 config_loader 获取指令列表
+            instructions = self.config_loader.instructions
+            self.ui.display_help([f"{name} - {inst.display_name}" for name, inst in instructions.items()])
         elif cmd == '/clear':
             self.memory.clear()
             self.ui.display_system_message("当前对话历史已清空。")
@@ -108,11 +112,26 @@ class CommandLineApp:
             if len(parts) > 1:
                 role_id = parts[1]
                 try:
-                    # 切换角色意味着开始一个全新的会话
-                    self.save_history()
+                    # 检查角色是否存在
+                    new_prompt = self.config_loader.get_instruction(role_id)
+                    
+                    self.save_history() # 保存旧会话
+                    
+                    # 开始新会话，重用当前模型
                     self.ui.display_system_message(f"正在切换到角色 '{role_id}' 并开始新会话...")
-                    await self.start_session(self.current_model_id, role_id)
-                except Exception as e:
+                    
+                    # 重置记忆
+                    self.memory = ConversationMemory(
+                        system_prompt=new_prompt.template,
+                        token_limit=self.memory_config.get('max_context_tokens', 3000)
+                    )
+                    self.current_role_id = role_id
+                    self.ui.display_welcome(
+                        self.config_loader.get_model_config(self.current_model_id).display_name,
+                        new_prompt.display_name
+                    )
+
+                except LLMAppError as e:
                     self.ui.display_system_message(f"切换角色失败: {e}", "Error")
             else:
                 self.ui.display_system_message("用法: /role <角色ID>", "Info")
@@ -128,7 +147,8 @@ class CommandLineApp:
             choices=model_choices, help="要使用的模型ID"
         )
         
-        role_choices = list(self.prompt_manager.system_prompts.keys())
+        # 从 config_loader 获取角色选项
+        role_choices = list(self.config_loader.instructions.keys())
         parser.add_argument(
             "-r", "--role", type=str, default="default",
             choices=role_choices, help="要使用的系统角色ID"
