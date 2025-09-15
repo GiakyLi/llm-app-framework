@@ -1,0 +1,18 @@
+{
+  "model": "qwen3-4b-local",
+  "timestamp_utc": "2025-09-11T10:41:18.139995",
+  "conversation": [
+    {
+      "role": "system",
+      "content": "You are a helpful and friendly AI assistant. Your responses should be clear, concise, and accurate."
+    },
+    {
+      "role": "user",
+      "content": "你好"
+    },
+    {
+      "role": "assistant",
+      "content": "你好！有什么问题我可以帮助你吗？😊"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+2025-09-09 16:56:22,589 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-09 16:56:22,627 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-09 16:56:22,627 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-09 16:56:22,628 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-09 16:57:00,185 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-09 16:57:00,627 - LLM_APP - ERROR - 流式请求过程中发生未知错误: Error code: 400 - {'object': 'error', 'message': "This model's maximum context length is 8192 tokens. However, you requested 8231 tokens (39 in the messages, 8192 in the completion). Please reduce the length of the messages or completion. None", 'type': 'BadRequestError', 'param': None, 'code': 400}
+Traceback (most recent call last):
+  File "/home/lee/my/llm-app-framework/llm_client/clients/openai_client.py", line 34, in get_streaming_chat_completion
+    stream = await self.async_client.chat.completions.create(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/lee/miniconda3/envs/vllm/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2028, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/lee/miniconda3/envs/vllm/lib/python3.11/site-packages/openai/_base_client.py", line 1784, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/lee/miniconda3/envs/vllm/lib/python3.11/site-packages/openai/_base_client.py", line 1584, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'object': 'error', 'message': "This model's maximum context length is 8192 tokens. However, you requested 8231 tokens (39 in the messages, 8192 in the completion). Please reduce the length of the messages or completion. None", 'type': 'BadRequestError', 'param': None, 'code': 400}
+2025-09-09 17:04:32,678 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-09 17:04:32,709 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-09 17:04:32,709 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-09 17:04:32,710 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-09 17:04:43,176 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-09 17:04:47,579 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-09 17:05:37,246 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-09/17-05-37.json
+2025-09-11 10:29:16,320 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:29:16,357 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:29:16,357 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:29:16,358 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:29:30,886 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:29:33,976 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:30:14,148 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/10-30-14.json
+2025-09-11 10:38:42,912 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:38:42,942 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:38:42,942 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:38:42,943 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:40:46,303 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:40:46,339 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:40:46,339 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:40:46,340 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:40:48,933 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:40:49,665 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:41:18,140 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/10-41-18.json
+2025-09-11 10:44:53,614 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:44:53,641 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:44:53,641 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:44:53,642 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:44:56,205 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:44:56,971 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:45:12,621 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:45:13,223 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:45:21,746 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/10-45-21.json
+2025-09-11 10:46:59,320 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:46:59,348 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:46:59,348 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:46:59,350 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:47:02,149 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:47:02,937 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:50:59,348 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/10-50-59.json
+2025-09-11 10:51:01,764 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 10:51:01,792 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 10:51:01,792 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 10:51:01,793 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 10:51:04,165 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:51:04,882 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:51:20,485 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:51:30,768 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:52:07,845 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:52:10,101 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:52:18,948 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 10:52:20,248 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 10:52:24,980 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/10-52-24.json
+2025-09-11 11:20:41,253 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 11:20:41,280 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 11:20:41,281 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 11:20:41,282 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 11:20:54,923 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 11:20:55,383 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 11:20:59,676 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/11-20-59.json
+2025-09-11 11:35:55,841 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 11:35:55,866 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 11:35:55,866 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 11:35:55,867 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 11:36:33,925 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 11:36:39,839 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 11:40:26,925 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 11:40:28,117 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 11:40:34,340 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/11-40-34.json
+2025-09-11 11:41:18,561 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 11:41:18,586 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 11:41:18,586 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 11:41:18,587 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 11:41:27,267 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 11:41:28,315 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 11:45:15,525 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/11-45-15.json
+2025-09-11 11:48:38,012 - LLM_APP - INFO - 对话历史存储已初始化，目录: data/history/
+2025-09-11 11:48:38,040 - LLM_APP - INFO - OpenAI兼容客户端已为模型 'Qwen3-4B-Instruct (本地)' 初始化，目标: http://localhost:8000/v1
+2025-09-11 11:48:38,041 - LLM_APP - INFO - 对话记忆已初始化，上下文Token限制: 3000
+2025-09-11 11:48:38,042 - LLM_APP - INFO - 新会话启动. 模型: qwen3-4b-local, 角色: default
+2025-09-11 11:49:03,493 - LLM_APP - INFO - 向模型 '/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507' 发送流式请求...
+2025-09-11 11:49:04,727 - LLM_APP - INFO - 流式响应接收完毕。
+2025-09-11 11:49:16,700 - LLM_APP - INFO - 对话历史已保存至: data/history/2025-09-11/11-49-16.json
