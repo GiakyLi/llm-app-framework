@@ -1,88 +1,120 @@
-# 可扩展的大模型应用框架
+# **LLM 应用框架 (LLM App Framework)**
 
-这是一个高度模块化、配置驱动的Python框架，用于与本地（如VLLM部署）和云端（如OpenAI, Groq）的大语言模型进行交互。它不仅仅是一个客户端，更是一个坚实的基础，可以方便地扩展以支持RAG、Agents、数据库集成等高级功能。
+这是一个高度模块化、配置驱动的 Python 框架，旨在简化与大语言模型（LLM）的交互，无论是本地部署的模型（如 VLLM）还是云端 API（如 OpenAI, Groq）。它不仅是一个聊天客户端，更是一个坚实且可扩展的基础，让开发者可以轻松集成 RAG、Agents、数据库等高级功能。
 
-## 核心特性
+## **核心设计理念**
 
--   **配置即代码**:
-    -   通过编辑 `configs/models_config.yaml` 即可轻松添加、删除或修改模型（本地/云端）。
-    -   所有API密钥、模型参数、系统指令均在外部配置，无需修改代码。
--   **多模型支持**:
-    -   内置支持所有兼容OpenAI API的接口（VLLM, OpenAI, Groq, ...）。
-    -   架构上可轻松扩展以支持其他类型的模型（如直接加载Hugging Face模型）。
--   **对话历史存储**:
-    -   所有交互式对话都会被自动保存到 `data/history/` 目录下。
-    -   文件按 `年-月-日/时-分-秒.json` 的格式组织，方便追溯。
--   **强大的指令系统**:
-    -   在 `models_config.yaml` 中预定义多种系统指令（System Prompt）。
-    -   在聊天中通过 `/instruction <指令名>` 实时切换模型角色。
--   **健壮性**:
-    -   完善的日志系统，同时输出到控制台和 `logs/app.log` 文件。
-    -   自定义异常体系，错误信息清晰明了。
--   **高度可扩展**:
-    -   清晰的模块划分（客户端、存储、配置），并预留了 `integrations` 目录。
-    -   使用抽象基类定义核心接口，方便未来添加新的客户端、存储方式或RAG流程。
+* **配置即代码**: 无需修改核心代码，通过编辑 YAML 文件即可添加新模型、定义系统角色或调整应用参数。  
+* **高内聚，低耦合**: 每个模块（客户端、存储、配置、UI）都专注于单一职责，并通过清晰的接口相互协作。  
+* **面向接口编程**: 核心逻辑依赖于抽象基类（如 BaseLLMClient），使得添加对新 LLM API（如 Hugging Face, Anthropic）的支持变得简单。  
+* **开发者友好**: 提供一键启动脚本、清晰的日志系统和结构化的代码，让二次开发和维护更加高效。
 
-## 安装与设置
+## **核心特性**
 
-1.  **克隆项目**:
-    ```bash
-    git clone <your-repo-url>
-    cd llm-app-framework
-    ```
+* **多模型无缝切换**: 内置对所有兼容 OpenAI API 的接口的支持（VLLM, Groq, ...），并可通过工厂模式轻松扩展。  
+* **动态角色系统**: 在配置文件中预定义多种系统指令（System Prompt），并在聊天中通过 /role \<角色名\> 实时切换模型的人设和行为。  
+* **自动化对话历史**: 所有交互式对话都会被自动保存到本地，并按日期和时间进行组织，方便回顾和分析。  
+* **强大的启动器 (Launcher)**: launch.py 脚本能够一键启动本地 VLLM 服务器和客户端应用，极大简化了本地模型的部署和调试流程。  
+* **稳健的错误处理与日志**: 拥有自定义的异常体系和详细的日志记录，关键操作和错误信息都会被清晰地记录下来。  
+* **优雅的命令行界面**: 基于 rich 库构建，提供语法高亮、美观的表格和面板，提升了终端使用体验。
 
-2.  **安装依赖**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+## **项目结构**
 
-3.  **配置API密钥 (可选)**:
-    -   对于需要API密钥的在线模型（如OpenAI, Groq），建议使用环境变量。打开 `configs/models_config.yaml`，可以看到 `api_key` 字段设置为 `ENV:YOUR_ENV_VARIABLE_NAME`。
-    -   设置环境变量:
-        ```bash
-        # For Linux/macOS
-        export OPENAI_API_KEY="your_openai_key"
-        export GROQ_API_KEY="your_groq_key"
-
-        # For Windows (Command Prompt)
-        set OPENAI_API_KEY="your_openai_key"
-        ```
-
-4.  **配置模型**:
-    -   打开 `configs/models_config.yaml`。
-    -   **对于本地VLLM**: 修改 `llama3-8b-vllm` 条目，确保 `api_base` 地址正确，`model_name` 与你VLLM服务器启动时使用的 `--model` 参数完全一致。
-    -   **对于在线API**: 检查模型名称是否正确。
-    -   你可以根据需要添加或删除任何模型配置。
-
-5.  **启动本地VLLM服务器 (如果需要)**:
-    在一个**单独的终端**中，启动你的VLLM服务：
-    ```bash
-    python -m vllm.entrypoints.openai.api_server --model meta-llama/Meta-Llama-3-8B-Instruct
-    ```
-
-## 如何运行
-
-直接运行 `main.py` 即可启动交互式聊天。
-
-```bash
-python main.py [OPTIONS]
+```
+.  
+├── configs/                   \# 所有的YAML配置文件  
+│   ├── app\_config.yaml       \# 应用级配置 (日志, 路径等)  
+│   └── models\_config.yaml    \# 模型和系统指令的配置  
+├── data/  
+│   └── history/               \# 对话历史存储目录 (自动创建)  
+├── logs/                      \# 日志文件目录 (自动创建)  
+├── llm\_client/               \# 核心应用代码  
+│   ├── clients/               \# LLM API 客户端实现  
+│   ├── core/                  \# 核心模块 (配置加载, 内存, 存储等)  
+│   ├── ui/                    \# 用户界面实现  
+│   └── app.py                 \# 命令行应用主逻辑  
+├── .gitignore  
+├── launch.py                  \# (推荐) 一键启动VLLM服务器和客户端的脚本  
+├── main.py                    \# 仅启动客户端的入口  
+├── README.md                  \# 您正在阅读的文件  
+└── requirements.txt           \# 项目依赖
 ```
 
-**可选参数**:
--   `-m, --model <模型ID>`: ...
--   `-r, --role <角色ID>`: 选择一个初始角色。默认为 `default`。
-    ```bash
-    # 以代码专家模式启动
-    python main.py --model llama3-8b-vllm --role code_expert
-    ```
+## **快速开始**
 
-### 交互式命令
+### **1\. 环境准备**
 
-在聊天界面中，你可以使用以下命令：
+克隆项目并安装所需的依赖包。
 
--   `/help`: 显示所有可用命令。
--   `/exit` 或 `/quit`: 退出程序并保存对话。
--   `/clear`: 清空当前对话，但保留系统指令。
--   `/instruction <指令ID>`: 实时切换系统指令。
--   `/role <角色ID>`: 实时切换系统角色。
--   `/save`: 手动保存当前对话历史。
+```
+git clone \<your-repo-url\>  
+cd llm-app-framework  
+pip install \-r requirements.txt
+```
+
+### **2\. 模型配置**
+
+打开 `configs/models\_config.yaml` 文件，根据您的需求进行配置。
+
+#### **使用本地VLLM模型 (推荐):**
+
+ ```
+   1. 找到 llama3-8b-vllm 或 qwen3-4b-local 配置项。  
+   2. 确保 api\_base 地址与您的 VLLM 服务器地址一致 (默认为 http://localhost:8000/v1)。  
+   3. 确保 model\_name 与您 VLLM 服务器启动时加载的模型标识符完全一致。
+   ```
+
+#### **使用在线API (如 OpenAI, Groq):**
+
+ ```
+   1. 取消注释或仿照示例添加一个新的模型配置。  
+   2. 将 api\_key 设置为 ENV:YOUR\_ENV\_VARIABLE\_NAME 的形式。  
+   3. 在您的终端中设置相应的环境变量：
+   
+   # For Linux/macOS  
+   export OPENAI\_API\_KEY="your\_openai\_key"  
+   export GROQ\_API\_KEY="your\_groq\_key"
+   
+   # For Windows (Command Prompt)  
+   set OPENAI\_API\_KEY="your\_openai\_key"
+   ```
+
+### **3\. 运行应用**
+
+我们强烈推荐使用 `launch.py` 脚本来启动应用，它会为您处理所有事情。
+
+#### **启动本地模型:**
+
+该脚本会自动为您启动一个本地 VLLM 服务器，并等待其就绪后启动客户端。
+
+```
+# 启动 models\_config.yaml 中配置的第一个本地模型  
+python launch.py
+
+# 启动指定的本地模型和角色  
+python launch.py \--model llama3-8b-vllm \--role code\_expert
+```
+
+您将在 `logs/vllm\_server.log` 中看到 VLLM 服务器的完整日志。
+
+#### **启动在线模型:**
+
+如果指定的模型是一个远程 API，脚本会自动跳过启动本地服务器的步骤。
+
+```
+# 假设 gpt-4o 是一个远程模型  
+python launch.py \--model gpt-4o
+```
+
+### **4\. 交互式命令**
+
+在聊天界面中，输入以下命令以控制应用：
+
+| 命令             | 描述                                              |
+| :--------------- | :------------------------------------------------ |
+| /help            | 显示所有可用命令和角色列表。                      |
+| /exit, /quit     | 退出程序并保存当前对话。                          |
+| /clear           | 清空当前对话历史，但保留系统角色。                |
+| /save            | 手动将当前对话保存到历史记录中。                  |
+| /role \<角色ID\> | 切换系统角色并开始一个新对话。                    |
+| /roles           | 列出所有在 models\_config.yaml 中定义的可用角色。 |

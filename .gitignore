@@ -72,3 +72,8 @@ data/history/
 # IDE settings
 .vscode/
 .idea/
+
+# 10.23
+--name
+-p
+-v

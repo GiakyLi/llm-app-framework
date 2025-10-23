@@ -1,4 +1,4 @@
-# launch.py (Final Polished Version)
+# launch.py (Restored to original format with added max_token control)
 import subprocess
 import time
 import signal
@@ -19,7 +19,7 @@ def stream_output(pipe, prefix, log_file):
             if log_file:
                 log_file.write(line)
 
-            # 2. [核心修改] 只有当日志行包含特定关键字时，才打印到控制台
+            # 2. 只有当日志行包含特定关键字时，才打印到控制台
             #    这可以过滤掉绝大多数VLLM的INFO级别的常规日志
             line_upper = line.upper()
             if 'ERROR' in line_upper or 'WARNING' in line_upper:
@@ -29,22 +29,30 @@ def stream_output(pipe, prefix, log_file):
         print(f"Error streaming output from {prefix}: {e}")
 
 
-def start_vllm_server(model_path: str, host: str, port: int, log_file):
+def start_vllm_server(model_path: str, host: str, port: int, log_file, 
+                        max_model_len: int = None, gpu_memory_utilization: float = 0.90):
     """在后台启动VLLM服务器，并实时显示其日志"""
     command = [
         sys.executable,
         "-m", "vllm.entrypoints.openai.api_server",
         "--model", model_path,
         "--trust-remote-code",
-        # "--max-model-len", "8192", # 移除此行，让VLLM自动推断
         "--host", host,
-        "--port", str(port)
+        "--port", str(port),
+        # [核心修改] 添加显存使用率参数
+        "--gpu-memory-utilization", str(gpu_memory_utilization)
     ]
+    
+    # [核心修改] 如果用户指定了max_model_len，则添加到启动命令中
+    if max_model_len:
+        command.extend(["--max-model-len", str(max_model_len)])
     
     print(f"🚀 正在后台启动VLLM服务器...")
     print(f"   模型路径: {model_path}")
     print(f"   监听地址: http://{host}:{port}")
-    # print(f"   最大长度限制: 8192 tokens") # 移除此行
+    # [核心修改] 根据是否设置了max_model_len来决定打印内容
+    if max_model_len:
+        print(f"   最大模型长度: {max_model_len} tokens")
     print(f"   服务器日志将保存在: {log_file.name}") 
     print("-" * 50)
 
@@ -56,47 +64,39 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file):
         stderr=subprocess.PIPE,
         text=True,
         bufsize=1,
-        preexec_fn=preexec_fn
+        preexec_fn=preexec_fn,
+        encoding='utf-8',
+        errors='replace'
     )
 
-    # 创建并启动线程，将日志文件句柄传递进去
-    stdout_thread = threading.Thread(
-        target=stream_output, 
-        args=(server_process.stdout, "VLLM-Server", log_file)
-    )
-    stderr_thread = threading.Thread(
-        target=stream_output, 
-        args=(server_process.stderr, "VLLM-Error", log_file)
-    )
-    stdout_thread.daemon = True
-    stderr_thread.daemon = True
+    # 创建并启动线程
+    stdout_thread = threading.Thread(target=stream_output, args=(server_process.stdout, "VLLM-Server", log_file), daemon=True)
+    stderr_thread = threading.Thread(target=stream_output, args=(server_process.stderr, "VLLM-Error", log_file), daemon=True)
     stdout_thread.start()
     stderr_thread.start()
 
     return server_process
 
-def wait_for_server_ready(server_process, server_url, console: Console, timeout: int = 60):
+def wait_for_server_ready(server_process, server_url, console: Console, timeout: int = 120): # 增加超时时间
     """使用rich.status等待VLLM服务器准备就绪"""
-    
-    # 使用rich.status创建一个动态的加载动画
     with console.status("[bold yellow]⏳ 正在等待服务器响应...", spinner="dots12") as status:
         start_time = time.time()
         
         while time.time() - start_time < timeout:
-            # 检查服务器进程是否已经意外退出
             if server_process.poll() is not None:
-                return False # 如果进程退出，直接返回失败
+                return False 
                 
             try:
-                response = requests.get(server_url, timeout=2) # 使用较短的超时进行轮询
+                # [核心修改] 使用更可靠的 /health 接口
+                response = requests.get(server_url, timeout=2)
                 if response.status_code == 200:
-                    return True # 服务器就绪，返回成功
+                    return True
             except requests.exceptions.RequestException:
-                pass # 忽略连接错误，继续等待
+                pass
             
             time.sleep(2)
             
-    return False # 如果循环结束仍未就绪，则为超时
+    return False
 
 def start_client(model_id: str, role_id: str):
     """在前台启动客户端应用"""
@@ -108,12 +108,13 @@ def start_client(model_id: str, role_id: str):
     ]
     print("\n🚀 正在启动客户端...")
     print("-" * 50)
-    subprocess.run(command)
+    # 使用 execv 替换当前进程，能更好地处理 Ctrl+C 信号
+    # os.execv(sys.executable, [sys.executable] + command)
+    os.execv(sys.executable, command)
 
 def main():
-    # [核心修改] 创建一个Console对象供后续使用
     console = Console()
-
+    server_process = None
     try:
         config_loader = ConfigLoader(
             app_config_path='configs/app_config.yaml',
@@ -122,42 +123,48 @@ def main():
         
         app_config = config_loader.app_config
         
-        log_config = app_config.get("logging", {})
-        log_dir = log_config.get("dir", "logs")
+        log_dir = app_config.get("logging", {}).get("dir", "logs")
         os.makedirs(log_dir, exist_ok=True)
         vllm_log_path = os.path.join(log_dir, "vllm_server.log")
 
         server_config = app_config.get("vllm_server", {})
         server_host = server_config.get("host", "127.0.0.1")
         server_port = server_config.get("port", 8000)
-        server_url = f"http://127.0.0.1:{server_port}/v1/models"
         
-        model_choices = list(config_loader.models.keys())
+        # [核心修改] 智能处理健康检查的URL
+        health_check_host = "127.0.0.1" if server_host == "0.0.0.0" else server_host
+        server_url = f"http://{health_check_host}:{server_port}/health" # 使用 /health 接口
+        
         parser = argparse.ArgumentParser(description="一键启动VLLM服务器和客户端")
+        model_choices = list(config_loader.models.keys())
         parser.add_argument("-m", "--model", type=str, default=model_choices[0] if model_choices else None, choices=model_choices, help="要启动的本地模型ID")
         parser.add_argument("-r", "--role", type=str, default="default", help="客户端要使用的初始角色ID")
+        
+        # [核心修改] 添加命令行参数
+        parser.add_argument("--max-model-len", type=int, help="手动设置模型的最大序列长度以适应显存 (例如 8192)")
+        parser.add_argument("--gpu-memory-utilization", type=float, default=0.90, help="设置vLLM可以使用的GPU显存比例 (0.0 到 1.0)")
+        
         args = parser.parse_args()
 
         if not args.model:
             console.print("[bold red]❌ 错误: 配置文件中未定义任何模型。")
             sys.exit(1)
 
-        server_process = None
-        
         with open(vllm_log_path, 'w', buffering=1, encoding='utf-8') as log_file:
             model_config = config_loader.get_model_config(args.model)
             
-            should_start_server = "localhost" in getattr(model_config, 'api_base', '') or \
-                                "127.0.0.1" in getattr(model_config, 'api_base', '')
+            is_local = "localhost" in getattr(model_config, 'api_base', '') or "127.0.0.1" in getattr(model_config, 'api_base', '')
 
-            if not should_start_server:
+            if not is_local:
                 console.print(f"✅ 模型 '{args.model}' 是一个远程API模型，无需启动本地服务器。")
                 start_client(args.model, args.role)
                 return
 
-            server_process = start_vllm_server(model_config.model_name, server_host, server_port, log_file)
+            server_process = start_vllm_server(
+                model_config.model_name, server_host, server_port, log_file,
+                args.max_model_len, args.gpu_memory_utilization
+            )
 
-            # [核心修改] 将console对象传递进去，并根据返回结果打印最终状态
             if wait_for_server_ready(server_process, server_url, console):
                 console.print("[bold green]✅ 服务器已就绪！")
                 start_client(args.model, args.role)
@@ -174,7 +181,10 @@ def main():
         if server_process and server_process.poll() is None:
             console.print(f"🧹 正在关闭后台VLLM服务器 (PID: {server_process.pid})...")
             if sys.platform != "win32":
-                os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+                try:
+                    os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
             else:
                 server_process.terminate()
             console.print("✅ 清理完成。")
