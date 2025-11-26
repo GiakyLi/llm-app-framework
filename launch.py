@@ -15,12 +15,11 @@ def stream_output(pipe, prefix, log_file):
     """从子进程的管道中读取输出，写入日志文件，并有选择地打印到控制台"""
     try:
         for line in iter(pipe.readline, ''):
-            # 1. 无论如何，都将原始日志行写入文件
+            # 原始日志行写入文件
             if log_file:
                 log_file.write(line)
 
-            # 2. 只有当日志行包含特定关键字时，才打印到控制台
-            #    这可以过滤掉绝大多数VLLM的INFO级别的常规日志
+            # 过滤INFO级别日志
             line_upper = line.upper()
             if 'ERROR' in line_upper or 'WARNING' in line_upper:
                 print(f"[{prefix}] {line}", end="")
@@ -39,18 +38,15 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file,
         "--trust-remote-code",
         "--host", host,
         "--port", str(port),
-        # [核心修改] 添加显存使用率参数
         "--gpu-memory-utilization", str(gpu_memory_utilization)
     ]
     
-    # [核心修改] 如果用户指定了max_model_len，则添加到启动命令中
     if max_model_len:
         command.extend(["--max-model-len", str(max_model_len)])
     
     print(f"🚀 正在后台启动VLLM服务器...")
     print(f"   模型路径: {model_path}")
     print(f"   监听地址: http://{host}:{port}")
-    # [核心修改] 根据是否设置了max_model_len来决定打印内容
     if max_model_len:
         print(f"   最大模型长度: {max_model_len} tokens")
     print(f"   服务器日志将保存在: {log_file.name}") 
@@ -60,10 +56,10 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file,
     
     server_process = subprocess.Popen(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        bufsize=1,
+        stdout=subprocess.PIPE,  # 捕获标准输出
+        stderr=subprocess.PIPE,  # 捕获标准错误
+        text=True,  # 以文本模式读写 (str)
+        bufsize=1,  # 开启行缓冲，确保日志能被逐行读取
         preexec_fn=preexec_fn,
         encoding='utf-8',
         errors='replace'
@@ -77,7 +73,7 @@ def start_vllm_server(model_path: str, host: str, port: int, log_file,
 
     return server_process
 
-def wait_for_server_ready(server_process, server_url, console: Console, timeout: int = 120): # 增加超时时间
+def wait_for_server_ready(server_process, server_url, console: Console, timeout: int = 120):
     """使用rich.status等待VLLM服务器准备就绪"""
     with console.status("[bold yellow]⏳ 正在等待服务器响应...", spinner="dots12") as status:
         start_time = time.time()
@@ -87,7 +83,6 @@ def wait_for_server_ready(server_process, server_url, console: Console, timeout:
                 return False 
                 
             try:
-                # [核心修改] 使用更可靠的 /health 接口
                 response = requests.get(server_url, timeout=2)
                 if response.status_code == 200:
                     return True
@@ -108,41 +103,53 @@ def start_client(model_id: str, role_id: str):
     ]
     print("\n🚀 正在启动客户端...")
     print("-" * 50)
-    # 使用 execv 替换当前进程，能更好地处理 Ctrl+C 信号
-    # os.execv(sys.executable, [sys.executable] + command)
+    # 替换进程，更好地信号处理(如Ctrl+C)
     os.execv(sys.executable, command)
 
 def main():
     console = Console()
     server_process = None
     try:
+        # 1. 加载配置
         config_loader = ConfigLoader(
             app_config_path='configs/app_config.yaml',
             models_config_path='configs/models_config.yaml'
         )
         
         app_config = config_loader.app_config
+        defaults = app_config.get('launcher_defaults', {})
+        default_model = defaults.get('default_model', None)
+        default_role = defaults.get('default_role', 'default')
+        default_gpu_util = defaults.get('default_gpu_utilization', 0.70)
+        default_max_len = defaults.get('default_max_model_len', None)
         
+        # 2. 设置日志目录
         log_dir = app_config.get("logging", {}).get("dir", "logs")
-        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)  # 创建日志目录（如果不存在）
         vllm_log_path = os.path.join(log_dir, "vllm_server.log")
 
+        # 3. 获取服务器配置
         server_config = app_config.get("vllm_server", {})
         server_host = server_config.get("host", "127.0.0.1")
         server_port = server_config.get("port", 8000)
         
-        # [核心修改] 智能处理健康检查的URL
+        # 4. 智能处理健康检查的URL
         health_check_host = "127.0.0.1" if server_host == "0.0.0.0" else server_host
         server_url = f"http://{health_check_host}:{server_port}/health" # 使用 /health 接口
         
+        # 5. 设置命令行参数解析
         parser = argparse.ArgumentParser(description="一键启动VLLM服务器和客户端")
         model_choices = list(config_loader.models.keys())
-        parser.add_argument("-m", "--model", type=str, default=model_choices[0] if model_choices else None, choices=model_choices, help="要启动的本地模型ID")
-        parser.add_argument("-r", "--role", type=str, default="default", help="客户端要使用的初始角色ID")
-        
-        # [核心修改] 添加命令行参数
-        parser.add_argument("--max-model-len", type=int, help="手动设置模型的最大序列长度以适应显存 (例如 8192)")
-        parser.add_argument("--gpu-memory-utilization", type=float, default=0.90, help="设置vLLM可以使用的GPU显存比例 (0.0 到 1.0)")
+
+        if default_model and default_model in model_choices:
+            final_default_model = default_model
+        else:
+            final_default_model = model_choices[0] if model_choices else None
+
+        parser.add_argument("-m", "--model", type=str, default=final_default_model, choices=model_choices, help="要启动的本地模型ID")
+        parser.add_argument("-r", "--role", type=str, default=default_role, help="客户端要使用的初始角色ID")
+        parser.add_argument("--max-model-len", type=int, default=default_max_len, help="手动设置模型的最大序列长度以适应显存 (例如 8192)")
+        parser.add_argument("--gpu-memory-utilization", type=float, default=default_gpu_util, help="设置vLLM可以使用的GPU显存比例 (0.0 到 1.0)")
         
         args = parser.parse_args()
 
@@ -150,6 +157,7 @@ def main():
             console.print("[bold red]❌ 错误: 配置文件中未定义任何模型。")
             sys.exit(1)
 
+        # 6. 启动流程
         with open(vllm_log_path, 'w', buffering=1, encoding='utf-8') as log_file:
             model_config = config_loader.get_model_config(args.model)
             
@@ -165,6 +173,7 @@ def main():
                 args.max_model_len, args.gpu_memory_utilization
             )
 
+            # 等待服务器准备就绪
             if wait_for_server_ready(server_process, server_url, console):
                 console.print("[bold green]✅ 服务器已就绪！")
                 start_client(args.model, args.role)

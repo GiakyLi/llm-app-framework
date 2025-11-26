@@ -1,5 +1,5 @@
 # configs/models_config.yaml
-
+# 模型库 (System Models)
 models:
   # 1. 本地 VLLM 部署的模型 (使用 OpenAI 兼容接口)
   qwen3-4b-local:
@@ -7,19 +7,7 @@ models:
     display_name: "Qwen3-4B-Instruct (本地)"
     api_base: "http://localhost:8000/v1"
     api_key: "not-used"
-    
-    model_name: "/home/lee/.cache/modelscope/hub/models/Qwen/Qwen3-4B-Instruct-2507" 
-    
-    parameters:
-      temperature: 0.7
-      max_tokens: 4096
-
-  llama3-8b-vllm:
-    provider: "openai_compatible"
-    display_name: "Llama-3-8B (Local VLLM)"
-    api_base: "http://localhost:8000/v1"
-    api_key: "not-used"
-    model_name: "meta-llama/Meta-Llama-3-8B-Instruct" 
+    model_name: "/models/Qwen3-4B-Instruct-2507"  # 默认docker容器地址
     parameters:
       temperature: 0.7
       max_tokens: 4096
@@ -34,27 +22,6 @@ models:
   #   parameters:
   #     temperature: 0.8
   #     max_tokens: 4096
-
-  # 3. Groq API 模型 (示例, 同样兼容 OpenAI)
-  # llama3-70b-groq:
-  #   provider: "openai_compatible"
-  #   display_name: "Llama-3-70B (Groq API)"
-  #   api_base: "https://api.groq.com/openai/v1"
-  #   api_key: "ENV:GROQ_API_KEY" # 从环境变量读取
-  #   model_name: "llama3-70b-8192"
-  #   parameters:
-  #     temperature: 0.6
-  #     max_tokens: 8192
-
-  # 4. 本地 Hugging Face 模型 (未来扩展方向)
-  # local_hf_model:
-  #   provider: "huggingface_local"
-  #   display_name: "My Local HF Model"
-  #   # path 将与 app_config.yaml 中的 local_models_dir 拼接
-  #   path: "path/to/your/model"
-  #   parameters:
-  #     temperature: 0.7
-  #     max_tokens: 2048
 
 # 指令库 (System Prompts)
 # 在交互式聊天中通过 /role <指令名> 来使用

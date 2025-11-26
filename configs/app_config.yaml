@@ -1,3 +1,5 @@
+# configs/app_config.yaml
+
 # 主应用配置文件
 vllm_server:
   host: "0.0.0.0"
@@ -17,3 +19,10 @@ storage:
 
 memory:
   max_context_tokens: 3000
+
+launcher_defaults:
+  default_model: "qwen3-4b-local"
+  default_role: "default"
+  default_gpu_utilization: 0.40
+  default_max_model_len: 8192
+  # default_max_model_len: null
